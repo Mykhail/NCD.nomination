@@ -24,7 +24,8 @@ echo
 # near dev-deploy ./build/debug/simple.wasm
 
 # comment the line below to deploy the other example contract
-near dev-deploy ./build/debug/singleton.wasm
+# near dev-deploy ./build/debug/singleton.wasm
+near deploy cert.somix11.testnet ./build/debug/singleton.wasm
 
 echo
 echo

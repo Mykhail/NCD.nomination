@@ -4,9 +4,13 @@ import {
     storage,
     PersistentVector,
     ContractPromise,
+    logging,
+    base64,
+    math,
+    context
 } from 'near-sdk-as';
 
-
+import uuid from "as-uuid";
 import {AccountId} from '../../utils';
 
 @nearBindgen
@@ -29,7 +33,8 @@ class VacanciesPool {
 class Vacancy {
     constructor(
         public reward: number,
-        public details: VacancyDetails
+        public details: VacancyDetails,
+        public vacancyId: string
     ) {}
 }
 
@@ -62,7 +67,13 @@ export function createVacanciesPool(poolName: string, vacancy: Vacancy): void {
 export function postVacancy(): void {
     const poolName = "dev";
     const vacancyDetails = new VacancyDetails("Senior blockchain developer", new VacancyRequirements("5+ years", "fluent", "EST"), "somix11.testnet");
-    const vacancy = new Vacancy(1, vacancyDetails);
+    const vacancyId = generateId();
+    logging.log(vacancyDetails);
+    logging.log(vacancyId);
+
+    const vacancy = new Vacancy(1, vacancyDetails, vacancyId);
+
+    logging.log(vacancy);
 
     if(!storage.hasKey(poolName)){
         createVacanciesPool(poolName, vacancy)
@@ -82,28 +93,24 @@ export function getVacanciesPool(poolName: string): VacanciesPool {
 
 export function getAllVacancies(poolName: string): Vacancy[] {
 
-    const vacanciesPool = getVacanciesPool(poolName);;
+    const vacanciesPool = getVacanciesPool(poolName);
     return vacanciesPool.getVacancies();
 }
 
-/*
+export function generateId(): string {
+
+    const title = context.sender.substring(0, context.sender.lastIndexOf('.'))
+    const temp = title + '-' + context.blockIndex.toString();
+
+    return temp;
+}
+
+
 //Recruiter provides depersonalised cv to the company
 export function postCandidate(): void {
 
 }
 
-export function generateVacancyId(): string {
-    return '_' + Math.random().toString(36).substr(2, 3);
-};
-
-export function generateCandidateId(): string {
-    return '_' + Math.random().toString(36).substr(2, 5);
-};
-
-export function test(): string {
-    return 'test112311';
-};
-*/
 //=====================================================================================================================
 /*
 @nearBindgen

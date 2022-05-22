@@ -13,6 +13,7 @@ import {
 import uuid from "as-uuid";
 import {AccountId} from '../../utils';
 
+/*================Vacancy classes================*/
 @nearBindgen
 class VacanciesPool {
     constructor(
@@ -34,16 +35,16 @@ class Vacancy {
     constructor(
         public reward: number,
         public details: VacancyDetails,
-        public vacancyId: string
+        public vacancy_id: string
     ) {}
 }
 
 @nearBindgen
 class VacancyDetails {
     constructor(
-        public positionTitle: string,
+        public position_title: string,
         public requirements: VacancyRequirements,
-        public companyId: AccountId
+        public company_id: AccountId
     ) {}
 }
 
@@ -56,24 +57,80 @@ class VacancyRequirements {
     ) {}
 }
 
-//Company posts vacancy
-export function createVacanciesPool(poolName: string, vacancy: Vacancy): void {
-    const vacancies = new PersistentVector<Vacancy>(poolName);
-    const vacanciesPool = new VacanciesPool(poolName, vacancies);
-    saveVacanciesPool(poolName, vacanciesPool);
+/*================Candidate related classes================*/
+@nearBindgen
+class CandidatesPool {
+    constructor(
+        public vacancyId: string,
+        public candidates: PersistentVector<Candidate>
+    ){}
+
+    getCandidates():Candidate[] {
+        const res: Candidate[] = [];
+        if (this.candidates) {
+            for (let i = 0; i < this.candidates.length; i++) {
+                res.push(this.candidates[i]);
+            }
+        }
+        return res;
+    }
 }
 
+@nearBindgen
+class Candidate {
+    constructor(
+        public candidate_id: string,
+        public experience: string,
+        public english_level: string,
+        public timezone: string,
+        public salary_expectations: string
+    ) {}
+}
+
+/*================Candidate contact classes================*/
+@nearBindgen
+class CandidatesContactsPool {
+    constructor(
+        public candidatId: string,
+        public candidatContacts: PersistentVector<CandidateContact>
+    ){}
+
+    findContact(candidatId: string):CandidateContact[] {
+        const res: CandidateContact[] = [];
+        for (let i = 0; i < this.candidatContacts.length; i++) {
+            if(this.candidatContacts[i].candidate_id ===candidatId) {
+                res.push(this.candidatContacts[i]);
+            }
+        }
+        return res;
+    }
+}
+
+@nearBindgen
+class CandidateContact {
+    constructor(
+        public candidate_id: string,
+        public full_name: string,
+        public email: string,
+        public telegram: string,
+    ) {}
+}
+
+/*================ Contract methods -> Vacancy ================*/
 //Company posts vacancy
-export function postVacancy(): void {
-    const poolName = "dev";
-    const vacancyDetails = new VacancyDetails("Senior blockchain developer", new VacancyRequirements("5+ years", "fluent", "EST"), "somix11.testnet");
-    const vacancyId = generateId();
-    logging.log(vacancyDetails);
-    logging.log(vacancyId);
+export function postVacancy(
+    pool: string, 
+    title: string, 
+    experience: string, 
+    english: string, 
+    timezone: string, 
+    company_id: string ): void {
+
+    const poolName = pool;
+    const vacancyDetails = new VacancyDetails(title, new VacancyRequirements(experience, english, timezone), company_id);
+    const vacancyId = "vacancy-" + generateId();
 
     const vacancy = new Vacancy(1, vacancyDetails, vacancyId);
-
-    logging.log(vacancy);
 
     if(!storage.hasKey(poolName)){
         createVacanciesPool(poolName, vacancy)
@@ -83,102 +140,95 @@ export function postVacancy(): void {
     vacanciesPool.vacancies.push(vacancy);
 }
 
+function createVacanciesPool(poolName: string, vacancy: Vacancy): void {
+    const vacancies = new PersistentVector<Vacancy>(poolName);
+    const vacanciesPool = new VacanciesPool(poolName, vacancies);
+    saveVacanciesPool(poolName, vacanciesPool);
+}
+
+
 function saveVacanciesPool(poolName: string, vacanciesPool: VacanciesPool): void {
     storage.set(poolName, vacanciesPool);
 }
 
-export function getVacanciesPool(poolName: string): VacanciesPool {
+function getVacanciesPool(poolName: string): VacanciesPool {
     return storage.getSome<VacanciesPool>(poolName);
 }
 
+//Company or recruiter can get list of all vacations for specific pool
 export function getAllVacancies(poolName: string): Vacancy[] {
-
     const vacanciesPool = getVacanciesPool(poolName);
     return vacanciesPool.getVacancies();
 }
 
-export function generateId(): string {
-
-    const title = context.sender.substring(0, context.sender.lastIndexOf('.'))
-    const temp = title + '-' + context.blockIndex.toString();
-
-    return temp;
-}
-
-
+/*================ Contract methods -> Candidate ================*/
 //Recruiter provides depersonalised cv to the company
-export function postCandidate(): void {
+export function postCandidate(
+    vacancy_id: string, 
+    experience: string,
+    english_level: string,
+    timezone: string,
+    salary_expectations: string,
+    full_name: string,
+    email: string,
+    telegram: string): void {
+    const vacancyId = vacancy_id;
+    const candidateId = "candidate-" + generateId();
+    const candidate = new Candidate(candidateId, experience, english_level, timezone, salary_expectations);
+    const candidateContact = new CandidateContact(candidateId, full_name, email, telegram);
 
-}
-
-//=====================================================================================================================
-/*
-@nearBindgen
-export class Contract {
-  private message: string = 'hello world'
-
-  // return the string 'hello world'
-  helloWorld(): string {
-    return this.message
-  }
-
-  // read the given key from account (contract) storage
-  read(key: string): string {
-    if (isKeyInStorage(key)) {
-      return `✅ Key [ ${key} ] has value [ ${storage.getString(key)!} ] and "this.message" is [ ${this.message} ]`
-    } else {
-      return `🚫 Key [ ${key} ] not found in storage. ( ${this.storageReport()} )`
+    if(!storage.hasKey("candidates_" + vacancyId)){
+        createCandidatesPool(vacancyId, candidate);
     }
-  }
-*/
-  /**
-  write the given value at the given key to account (contract) storage
-  ---
-  note: this is what account storage will look like AFTER the write() method is called the first time
-  ╔════════════════════════════════╤══════════════════════════════════════════════════════════════════════════════════╗
-  ║                            key │ value                                                                            ║
-  ╟────────────────────────────────┼──────────────────────────────────────────────────────────────────────────────────╢
-  ║                          STATE │ {                                                                                ║
-  ║                                │   "message": "data was saved"                                                    ║
-  ║                                │ }                                                                                ║
-  ╟────────────────────────────────┼──────────────────────────────────────────────────────────────────────────────────╢
-  ║                       some-key │ some value                                                                       ║
-  ╚════════════════════════════════╧══════════════════════════════════════════════════════════════════════════════════╝
-   */
 
-/*
-  @mutateState()
-  write(key: string, value: string): string {
-    storage.set(key, value)
-    this.message = 'data was saved' // this is why we need the deorator @mutateState() above the method name
-    return `✅ Data saved. ( ${this.storageReport()} )`
-  }
+    if(!storage.hasKey("candidates_contacts_" + candidateId)){
+        createCandidatesContactsPool(candidateId, candidateContact);
+    }
 
+    const candidatesPool = getCandidatesPool(vacancyId);
+    const candidatesContacts = getCandidatesContacts(candidateId);
 
-  // private helper method used by read() and write() above
-  private storageReport(): string {
-    return `storage [ ${Context.storageUsage} bytes ]`
-  }
+    candidatesPool.candidates.push(candidate);
+    candidatesContacts.candidatContacts.push(candidateContact);
 }
-*/
 
-/**
- * This function exists only to avoid a compiler error
- *
+function createCandidatesPool(vacancyId: string, candidate: Candidate): void {
+    const candidates = new PersistentVector<Candidate>(vacancyId);
+    const candidatesPool = new CandidatesPool(vacancyId, candidates);
+    saveCandidatesPool(vacancyId, candidatesPool);
+}
 
-ERROR TS2339: Property 'contains' does not exist on type 'src/singleton/assembly/index/Contract'.
+function saveCandidatesPool(vacancyId: string, candidatesPool: CandidatesPool): void {
+    storage.set("candidates_" + vacancyId, candidatesPool);
+}
 
-     return this.contains(key);
-                 ~~~~~~~~
- in ~lib/near-sdk-core/storage.ts(119,17)
+export function getCandidatesPool(vacancyId: string): CandidatesPool {
+    return storage.getSome<CandidatesPool>("candidates_" + vacancyId);
+}
 
-/Users/sherif/Documents/code/near/_projects/edu.t3/starter--near-sdk-as/node_modules/asbuild/dist/main.js:6
-        throw err;
-        ^
+export function getAllCandidates(vacancyId: string): Candidate[] {
+    const candidatesPool = getCandidatesPool(vacancyId);
+    return candidatesPool.getCandidates();
+}
 
- * @param key string key in account storage
- * @returns boolean indicating whether key exists
- */
-//function isKeyInStorage(key: string): bool {
-//  return storage.hasKey(key)
-//}
+/*================ Contract methods -> Contact ================*/
+function createCandidatesContactsPool(candidateId: string, candidateContact: CandidateContact): void {
+    const candidatesContacts = new PersistentVector<CandidateContact>(candidateId);
+    const candidatesContactsPool = new CandidatesContactsPool(candidateId, candidatesContacts);
+    saveCandidatesContactsPool(candidateId, candidatesContactsPool);
+}
+
+function saveCandidatesContactsPool(candidateId: string, candidatesContactsPool: CandidatesContactsPool): void {
+    storage.set("candidates_contacts_" + candidateId, candidatesContactsPool);
+}
+
+function getCandidatesContacts(candidateId: string): CandidatesContactsPool {
+    return storage.getSome<CandidatesContactsPool>("candidates_contacts_" + candidateId);
+}
+
+/*================ Contract methods -> helpers ================*/
+function generateId(): string {
+    //const title = context.sender.substring(0, context.sender.lastIndexOf('.'))
+    //const temp = title + '-' + context.blockIndex.toString();
+    return context.blockIndex.toString();
+}

@@ -7,11 +7,12 @@ import {
     logging,
     base64,
     math,
-    context
+    context,
+    ContractPromiseBatch
 } from 'near-sdk-as';
 
 import uuid from "as-uuid";
-import {AccountId} from '../../utils';
+import {AccountId, XCC_GAS} from '../../utils';
 
 /*================Vacancy classes================*/
 @nearBindgen
@@ -33,7 +34,7 @@ class VacanciesPool {
 @nearBindgen
 class Vacancy {
     constructor(
-        public reward: number,
+        public reward: u128,
         public details: VacancyDetails,
         public vacancy_id: string
     ) {}
@@ -83,7 +84,8 @@ class Candidate {
         public experience: string,
         public english_level: string,
         public timezone: string,
-        public salary_expectations: string
+        public salary_expectations: string,
+        private telegram: string
     ) {}
 }
 
@@ -129,8 +131,14 @@ export function postVacancy(
     const poolName = pool;
     const vacancyDetails = new VacancyDetails(title, new VacancyRequirements(experience, english, timezone), company_id);
     const vacancyId = "vacancy-" + generateId();
+    const amount = context.attachedDeposit;
+    const account = context.sender;
 
-    const vacancy = new Vacancy(1, vacancyDetails, vacancyId);
+    logging.log(Context.contractName);
+    logging.log(Context.predecessor);
+    logging.log(Context.sender);
+
+    const vacancy = new Vacancy(amount, vacancyDetails, vacancyId);
 
     if(!storage.hasKey(poolName)){
         createVacanciesPool(poolName, vacancy)
@@ -146,7 +154,6 @@ function createVacanciesPool(poolName: string, vacancy: Vacancy): void {
     saveVacanciesPool(poolName, vacanciesPool);
 }
 
-
 function saveVacanciesPool(poolName: string, vacanciesPool: VacanciesPool): void {
     storage.set(poolName, vacanciesPool);
 }
@@ -161,6 +168,18 @@ export function getAllVacancies(poolName: string): Vacancy[] {
     return vacanciesPool.getVacancies();
 }
 
+export function getVacancyInfo(vacancyId: string, poolName: string): Vacancy | null{ 
+    const allVacancies = getAllVacancies(poolName);
+    let vacancyInfo!: Vacancy;
+
+    for (var i = 0; i < allVacancies.length; i++) {
+        if(allVacancies[i].vacancy_id == vacancyId) {
+            vacancyInfo = allVacancies[i];
+        }
+    }
+    return vacancyInfo
+}
+
 /*================ Contract methods -> Candidate ================*/
 //Recruiter provides depersonalised cv to the company
 export function postCandidate(
@@ -172,28 +191,29 @@ export function postCandidate(
     full_name: string,
     email: string,
     telegram: string): void {
+
     const vacancyId = vacancy_id;
     const candidateId = "candidate-" + generateId();
-    const candidate = new Candidate(candidateId, experience, english_level, timezone, salary_expectations);
-    const candidateContact = new CandidateContact(candidateId, full_name, email, telegram);
+    const candidate = new Candidate(candidateId, experience, english_level, timezone, salary_expectations, telegram);
+    //const candidateContact = new CandidateContact(candidateId, full_name, email, telegram);
 
     if(!storage.hasKey("candidates_" + vacancyId)){
         createCandidatesPool(vacancyId, candidate);
     }
 
-    if(!storage.hasKey("candidates_contacts_" + candidateId)){
-        createCandidatesContactsPool(candidateId, candidateContact);
-    }
+    //if(!storage.hasKey("candidates_contacts_" + candidateId)){
+    //    createCandidatesContactsPool(candidateId, candidateContact);
+    //}
 
     const candidatesPool = getCandidatesPool(vacancyId);
-    const candidatesContacts = getCandidatesContacts(candidateId);
+    //const candidatesContacts = getCandidatesContacts(candidateId);
 
     candidatesPool.candidates.push(candidate);
-    candidatesContacts.candidatContacts.push(candidateContact);
+    //candidatesContacts.candidatContacts.push(candidateContact);
 }
 
 function createCandidatesPool(vacancyId: string, candidate: Candidate): void {
-    const candidates = new PersistentVector<Candidate>(vacancyId);
+    const candidates = new PersistentVector<Candidate>("candidates_" + vacancyId);
     const candidatesPool = new CandidatesPool(vacancyId, candidates);
     saveCandidatesPool(vacancyId, candidatesPool);
 }
@@ -202,13 +222,32 @@ function saveCandidatesPool(vacancyId: string, candidatesPool: CandidatesPool): 
     storage.set("candidates_" + vacancyId, candidatesPool);
 }
 
-export function getCandidatesPool(vacancyId: string): CandidatesPool {
+function getCandidatesPool(vacancyId: string): CandidatesPool {
     return storage.getSome<CandidatesPool>("candidates_" + vacancyId);
 }
 
 export function getAllCandidates(vacancyId: string): Candidate[] {
     const candidatesPool = getCandidatesPool(vacancyId);
     return candidatesPool.getCandidates();
+}
+
+export function hireCandidate(poolName: string, candidateId: string, vacancyId: string): void {
+
+    const vacancy = getVacancyInfo(vacancyId, poolName);
+    const companyId = vacancy ? vacancy.details.company_id : "";
+
+    if(vacancy && companyId) {
+        const to_recruiter = ContractPromiseBatch.create(companyId);
+        const self = Context.contractName
+        to_recruiter.transfer(vacancy.reward);
+
+        // receive confirmation of payout before setting game to inactive
+        to_recruiter.then(self).function_call("on_payout_complete", "{}", u128.Zero, XCC_GAS);
+    }
+}
+
+export function on_payout_complete(): void {
+    logging.log("candidate has been hired!");
 }
 
 /*================ Contract methods -> Contact ================*/

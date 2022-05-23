@@ -75,6 +75,21 @@ class CandidatesPool {
         }
         return res;
     }
+
+    removeCandidate(candidateId: string): void {
+        
+        let index!: i32;
+        for (let i = 0; i < this.candidates.length; i++) {
+            if(this.candidates[i].candidate_id == candidateId) {
+                index = i;
+            }
+        }
+
+        if (index > -1) {
+            this.candidates.swap_remove(index);
+        }
+
+    }
 }
 
 @nearBindgen
@@ -85,7 +100,9 @@ class Candidate {
         public english_level: string,
         public timezone: string,
         public salary_expectations: string,
-        private telegram: string
+        private telegram: string,
+        private full_name: string,
+        private email: string
     ) {}
 }
 
@@ -194,54 +211,76 @@ export function postCandidate(
 
     const vacancyId = vacancy_id;
     const candidateId = "candidate-" + generateId();
-    const candidate = new Candidate(candidateId, experience, english_level, timezone, salary_expectations, telegram);
+    const candidate = new Candidate(candidateId, experience, english_level, timezone, salary_expectations, telegram, full_name, email);
     //const candidateContact = new CandidateContact(candidateId, full_name, email, telegram);
 
     if(!storage.hasKey("candidates_" + vacancyId)){
-        createCandidatesPool(vacancyId, candidate);
+        createCandidatesPool(vacancyId, "candidates_") ;
     }
 
     //if(!storage.hasKey("candidates_contacts_" + candidateId)){
     //    createCandidatesContactsPool(candidateId, candidateContact);
     //}
 
-    const candidatesPool = getCandidatesPool(vacancyId);
+    const candidatesPool = getCandidatesPool(vacancyId, "candidates_");
     //const candidatesContacts = getCandidatesContacts(candidateId);
 
     candidatesPool.candidates.push(candidate);
     //candidatesContacts.candidatContacts.push(candidateContact);
 }
 
-function createCandidatesPool(vacancyId: string, candidate: Candidate): void {
-    const candidates = new PersistentVector<Candidate>("candidates_" + vacancyId);
+function createCandidatesPool(vacancyId: string, poolName:string): void {
+    const candidates = new PersistentVector<Candidate>(poolName + vacancyId);
     const candidatesPool = new CandidatesPool(vacancyId, candidates);
-    saveCandidatesPool(vacancyId, candidatesPool);
+    saveCandidatesPool(vacancyId, candidatesPool, poolName);
 }
 
-function saveCandidatesPool(vacancyId: string, candidatesPool: CandidatesPool): void {
-    storage.set("candidates_" + vacancyId, candidatesPool);
+function saveCandidatesPool(vacancyId: string, candidatesPool: CandidatesPool, poolName:string): void {
+    storage.set(poolName + vacancyId, candidatesPool);
 }
 
-function getCandidatesPool(vacancyId: string): CandidatesPool {
-    return storage.getSome<CandidatesPool>("candidates_" + vacancyId);
+function getCandidatesPool(vacancyId: string, poolName: string): CandidatesPool {
+    return storage.getSome<CandidatesPool>(poolName + vacancyId);
 }
 
-export function getAllCandidates(vacancyId: string): Candidate[] {
-    const candidatesPool = getCandidatesPool(vacancyId);
+export function getAllCandidates(vacancyId: string, poolName:string): Candidate[] {
+    const candidatesPool = getCandidatesPool(vacancyId, poolName);
     return candidatesPool.getCandidates();
+}
+
+function getCandidateInfo(vacancyId: string, candidateId: string, poolName: string): Candidate { 
+    const allCandidates = getAllCandidates(vacancyId, poolName);
+    let candidateInfo!: Candidate;
+
+    for (var i = 0; i < allCandidates.length; i++) {
+        if(allCandidates[i].candidate_id == candidateId) {
+            candidateInfo = allCandidates[i];
+        }
+    }
+    return candidateInfo
 }
 
 export function hireCandidate(poolName: string, candidateId: string, vacancyId: string): void {
 
     const vacancy = getVacancyInfo(vacancyId, poolName);
     const companyId = vacancy ? vacancy.details.company_id : "";
+    let hiredCandidate: Candidate = getCandidateInfo(vacancyId, candidateId, "candidates_");
+
+    if(!storage.hasKey("hired_candidates_" + vacancyId)){
+        createCandidatesPool(vacancyId, "hired_candidates_");
+    }
+
+    const hiredCandidatesPool = getCandidatesPool(vacancyId, "hired_candidates_");
+    hiredCandidatesPool.candidates.push(hiredCandidate);
+
+    const candidatesPool = getCandidatesPool(vacancyId, "candidates_");
+    candidatesPool.removeCandidate(candidateId);
 
     if(vacancy && companyId) {
         const to_recruiter = ContractPromiseBatch.create(companyId);
         const self = Context.contractName
         to_recruiter.transfer(vacancy.reward);
 
-        // receive confirmation of payout before setting game to inactive
         to_recruiter.then(self).function_call("on_payout_complete", "{}", u128.Zero, XCC_GAS);
     }
 }

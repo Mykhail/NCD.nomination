@@ -3,16 +3,11 @@ import {
     Context,
     storage,
     PersistentVector,
-    ContractPromise,
     logging,
-    base64,
-    math,
-    context,
     ContractPromiseBatch
 } from 'near-sdk-as';
 
-import uuid from "as-uuid";
-import {AccountId, XCC_GAS} from '../../utils';
+import {AccountId, XCC_GAS, VACANCY_PREFIX, CANDIDATES_PREFIX, HIRED_CANDIDATES_PREFIX, generateId} from '../../utils';
 
 /*================Vacancy classes================*/
 @nearBindgen
@@ -76,6 +71,23 @@ class CandidatesPool {
         return res;
     }
 
+    getDepersonalizedCandidates():DepersonalizedCandidate[] {
+        const res: DepersonalizedCandidate[] = [];
+        if (this.candidates) {
+            for (let i = 0; i < this.candidates.length; i++) {
+                let depersonalizedCandidate: DepersonalizedCandidate = new DepersonalizedCandidate(
+                    this.candidates[i].candidate_id,
+                    this.candidates[i].experience,
+                    this.candidates[i].english_level,
+                    this.candidates[i].timezone,
+                    this.candidates[i].salary_expectations)
+
+                res.push(depersonalizedCandidate);
+            }
+        }
+        return res;
+    }
+
     removeCandidate(candidateId: string): void {
         
         let index!: i32;
@@ -100,14 +112,25 @@ class Candidate {
         public english_level: string,
         public timezone: string,
         public salary_expectations: string,
-        private telegram: string,
-        private full_name: string,
-        private email: string
+        public telegram: string,
+        public full_name: string,
+        public email: string
+    ) {}
+}
+
+@nearBindgen
+class DepersonalizedCandidate {
+    constructor(
+        public candidate_id: string,
+        public experience: string,
+        public english_level: string,
+        public timezone: string,
+        public salary_expectations: string,
     ) {}
 }
 
 /*================Candidate contact classes================*/
-@nearBindgen
+/*@nearBindgen
 class CandidatesContactsPool {
     constructor(
         public candidatId: string,
@@ -134,7 +157,7 @@ class CandidateContact {
         public telegram: string,
     ) {}
 }
-
+*/
 /*================ Contract methods -> Vacancy ================*/
 //Company posts vacancy
 export function postVacancy(
@@ -147,13 +170,14 @@ export function postVacancy(
 
     const poolName = pool;
     const vacancyDetails = new VacancyDetails(title, new VacancyRequirements(experience, english, timezone), company_id);
-    const vacancyId = "vacancy-" + generateId();
-    const amount = context.attachedDeposit;
-    const account = context.sender;
+    const vacancyId = VACANCY_PREFIX + generateId();
+    const amount = Context.attachedDeposit;
+    const ONE_NEAR = u128.from('1000000000000000000000000');
 
-    logging.log(Context.contractName);
-    logging.log(Context.predecessor);
-    logging.log(Context.sender);
+    assert(
+        u128.ge(Context.attachedDeposit, ONE_NEAR),
+        'Minimum 1 NEAR must be attached to post a vacancy'
+      );
 
     const vacancy = new Vacancy(amount, vacancyDetails, vacancyId);
 
@@ -210,19 +234,19 @@ export function postCandidate(
     telegram: string): void {
 
     const vacancyId = vacancy_id;
-    const candidateId = "candidate-" + generateId();
+    const candidateId = CANDIDATES_PREFIX + generateId();
     const candidate = new Candidate(candidateId, experience, english_level, timezone, salary_expectations, telegram, full_name, email);
     //const candidateContact = new CandidateContact(candidateId, full_name, email, telegram);
 
-    if(!storage.hasKey("candidates_" + vacancyId)){
-        createCandidatesPool(vacancyId, "candidates_") ;
+    if(!storage.hasKey(CANDIDATES_PREFIX + vacancyId)){
+        createCandidatesPool(vacancyId, CANDIDATES_PREFIX) ;
     }
 
     //if(!storage.hasKey("candidates_contacts_" + candidateId)){
     //    createCandidatesContactsPool(candidateId, candidateContact);
     //}
 
-    const candidatesPool = getCandidatesPool(vacancyId, "candidates_");
+    const candidatesPool = getCandidatesPool(vacancyId, CANDIDATES_PREFIX);
     //const candidatesContacts = getCandidatesContacts(candidateId);
 
     candidatesPool.candidates.push(candidate);
@@ -243,13 +267,23 @@ function getCandidatesPool(vacancyId: string, poolName: string): CandidatesPool 
     return storage.getSome<CandidatesPool>(poolName + vacancyId);
 }
 
-export function getAllCandidates(vacancyId: string, poolName:string): Candidate[] {
+function getCandidatesList(vacancyId: string, poolName:string): Candidate[] {
     const candidatesPool = getCandidatesPool(vacancyId, poolName);
     return candidatesPool.getCandidates();
 }
 
+export function getDepersonalizedCandidates(vacancyId: string, poolName:string): DepersonalizedCandidate[] {
+    const candidatesPool = getCandidatesPool(vacancyId, poolName);
+    return candidatesPool.getDepersonalizedCandidates();
+}
+
+export function getHiredCandidates(vacancyId: string): Candidate[] {
+    const candidatesPool = getCandidatesPool(vacancyId, HIRED_CANDIDATES_PREFIX);
+    return candidatesPool.getCandidates();
+}
+
 function getCandidateInfo(vacancyId: string, candidateId: string, poolName: string): Candidate { 
-    const allCandidates = getAllCandidates(vacancyId, poolName);
+    const allCandidates = getCandidatesList(vacancyId, poolName);
     let candidateInfo!: Candidate;
 
     for (var i = 0; i < allCandidates.length; i++) {
@@ -264,16 +298,16 @@ export function hireCandidate(poolName: string, candidateId: string, vacancyId: 
 
     const vacancy = getVacancyInfo(vacancyId, poolName);
     const companyId = vacancy ? vacancy.details.company_id : "";
-    let hiredCandidate: Candidate = getCandidateInfo(vacancyId, candidateId, "candidates_");
+    let hiredCandidate: Candidate = getCandidateInfo(vacancyId, candidateId, CANDIDATES_PREFIX);
 
-    if(!storage.hasKey("hired_candidates_" + vacancyId)){
-        createCandidatesPool(vacancyId, "hired_candidates_");
+    if(!storage.hasKey(HIRED_CANDIDATES_PREFIX + vacancyId)){
+        createCandidatesPool(vacancyId, HIRED_CANDIDATES_PREFIX);
     }
 
-    const hiredCandidatesPool = getCandidatesPool(vacancyId, "hired_candidates_");
+    const hiredCandidatesPool = getCandidatesPool(vacancyId, HIRED_CANDIDATES_PREFIX);
     hiredCandidatesPool.candidates.push(hiredCandidate);
 
-    const candidatesPool = getCandidatesPool(vacancyId, "candidates_");
+    const candidatesPool = getCandidatesPool(vacancyId, CANDIDATES_PREFIX);
     candidatesPool.removeCandidate(candidateId);
 
     if(vacancy && companyId) {
@@ -290,7 +324,7 @@ export function on_payout_complete(): void {
 }
 
 /*================ Contract methods -> Contact ================*/
-function createCandidatesContactsPool(candidateId: string, candidateContact: CandidateContact): void {
+/*function createCandidatesContactsPool(candidateId: string, candidateContact: CandidateContact): void {
     const candidatesContacts = new PersistentVector<CandidateContact>(candidateId);
     const candidatesContactsPool = new CandidatesContactsPool(candidateId, candidatesContacts);
     saveCandidatesContactsPool(candidateId, candidatesContactsPool);
@@ -303,10 +337,4 @@ function saveCandidatesContactsPool(candidateId: string, candidatesContactsPool:
 function getCandidatesContacts(candidateId: string): CandidatesContactsPool {
     return storage.getSome<CandidatesContactsPool>("candidates_contacts_" + candidateId);
 }
-
-/*================ Contract methods -> helpers ================*/
-function generateId(): string {
-    //const title = context.sender.substring(0, context.sender.lastIndexOf('.'))
-    //const temp = title + '-' + context.blockIndex.toString();
-    return context.blockIndex.toString();
-}
+*/

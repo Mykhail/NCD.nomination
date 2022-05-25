@@ -318,6 +318,7 @@ export function hireCandidate(poolName: string, candidateId: string, vacancyId: 
         const to_recruiter = ContractPromiseBatch.create(companyId);
         const self = Context.contractName
         to_recruiter.transfer(vacancy.reward);
+        logging.log(hiredCandidate)
         
         to_recruiter.then(self).function_call("on_hiring_complete", "{}", u128.Zero, XCC_GAS);
     }

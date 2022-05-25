@@ -71,14 +71,14 @@ _Reward for the candidates is sent to Laura Near account_
 
 ![hire-candidate](wireframes/6.HireCandidatePopup[hiring_manager_view].png)
 
-## Recruitment Contract
+## Contract
 
-Contract is represented by two primary classes Vacancy and Candidate. 
-Vacancy is created by a hiring managers and keep details about this entity:
+Contract is represented by two primary entities: Vacancy and Candidate. 
+Instance of Vacancy is created by a hiring managers and keep details about this entity:
 - Position requirements
 - Reward that company is ready to pay to a recruitement agency
 
-Candidate is created by a recruiter and keep the following details:
+Instance of Candidate is created by a recruiter and keep the following details:
 - Candidate experience
 - Timezone
 - English level

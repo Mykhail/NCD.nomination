@@ -36,8 +36,7 @@ Create a decentralized application based on the Near Protocol to establish a rel
 
 1. clone this repo
 2. run `yarn install` (or `npm install`)
-3. run `export CONTRACT=<ACCOUNT_TO_DEPLOY>`
-4. run `./scripts/recruitement-deploy.sh` 
+3. run `./scripts/recruitement-deploy.sh` 
 
 ## UX Wireframes
 
@@ -60,7 +59,7 @@ _Laura checks the list of the open vacancies and start looking for available can
 
 _As soon as a candidate found Laura applies them to a vacancy_
 
-![apply-candidate](wireframes/3.OpenVacancies[recruiter_view].png)
+![apply-candidate](wireframes/4.ApplyCandidate[recruiter_view].png)
 
 **Hire candidate**
 

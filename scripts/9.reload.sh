@@ -27,9 +27,9 @@ echo
 # near dev-deploy ./build/debug/singleton.wasm
 
 
-near delete cert.somix11.testnet somix11.testnet
-near create-account cert.somix11.testnet --masterAccount somix11.testnet
-near deploy cert.somix11.testnet ./build/debug/singleton.wasm
+near delete $CONTRACT $BENEFICIARY
+near create-account $CONTRACT --masterAccount $BENEFICIARY
+near deploy $CONTRACT ./build/debug/recruitment.wasm
 
 echo
 echo

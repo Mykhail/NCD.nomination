@@ -85,32 +85,36 @@ All UX wireframes can be found in the `wireframes/` folder.
 Wireframes of the core pages are presented below.
  
 **Post a Vacancy**
+
 _Hiring manager Jason posts vacancy, provids position requirements and deposit a reward for the recruitment agency (e.g. 50 Near)_
 
-![post-vacancy](wireframes/1.PostVacancy[hiring manager view].png)
+![post-vacancy](wireframes/1.PostVacancy[hiring_manager_view].png)
 
 **Get list of posted vacncies**
 
 _Laura checks the list of the open vacancies and start looking for available candidates_
 
-![get-vacancies-list](wireframes/3.OpenVacancies[recruiter view].png)
+![get-vacancies-list](wireframes/3.OpenVacancies[recruiter_view].png)
 
 **Apply candidate**
+
 _As soon as a candidate found Laura applies them to a vacancy_
 
-![apply-candidate](wireframes/3.OpenVacancies[recruiter view].png)
+![apply-candidate](wireframes/3.OpenVacancies[recruiter_view].png)
 
 **Get list of applied candidates**
+
 _Jason see a new depersonalized candidate in the candidates list_
 _Jason checks information if the candidate suits requirements and if so click "hire"_
 
-![check-candidates](wireframes/5.AllCandidates[hiring manager view].png)
+![check-candidates](wireframes/5.AllCandidates[hiring_manager_view].png)
 
 **Hire candidate**
+
 _Contact information of the candidate is sent to Jason and appear in the Hired Candidates list_
 _Reward for the candidates is sent to Laura Near account_
 
-![hire-candidate](wireframes/6.HireCandidatePopup[hiring manager view].png)
+![hire-candidate](wireframes/6.HireCandidatePopup[hiring_manager_view].png)
 
 ## Recruitement contract
 

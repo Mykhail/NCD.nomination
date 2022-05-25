@@ -261,7 +261,7 @@ export function postCandidate(
     const vacancyId = vacancy_id;
     const candidateId = CANDIDATES_PREFIX + generateId();
     const candidate = new Candidate(candidateId, experience, english_level, timezone, salary_expectations, telegram, full_name, email);
-
+    
     if(!storage.hasKey(CANDIDATES_PREFIX + vacancyId)){
         createCandidatesPool(vacancyId, CANDIDATES_PREFIX) ;
     }
@@ -280,8 +280,8 @@ export function postCandidate(
  *  Hiring manager get the list of candodates for the specific vacancy to check if a profile suite needs of the company or not
  *  near view cert.somix11.testnet getDepersonalizedCandidates '{"vacancyId": "{{COPY FROM A VACANCY OBJECT}}", "poolName": "candidates_"}' --accountId="{{ACCOUNT_ID}}"
  */
-export function getCandidates(vacancyId: string, poolName:string): DepersonalizedCandidate[] {
-    const candidatesPool = getCandidatesPool(vacancyId, poolName);
+export function getCandidates(vacancyId: string): DepersonalizedCandidate[] {
+    const candidatesPool = getCandidatesPool(vacancyId, CANDIDATES_PREFIX);
     return candidatesPool.getDepersonalizedCandidates();
 }
 

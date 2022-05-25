@@ -12,6 +12,8 @@ echo
 [ -z "$CONTRACT" ] && echo "Missing \$CONTRACT environment variable" && exit 1
 [ -z "$CONTRACT" ] || echo "Found it! \$CONTRACT is set to [ $CONTRACT ]"
 
+POOL=$1
+
 echo
 echo
 echo ---------------------------------------------------------
@@ -19,7 +21,7 @@ echo "Step 1: Call 'getAllVacancies' functions on the contract"
 echo ---------------------------------------------------------
 echo
 
-near view $CONTRACT getAllVacancies '{"poolName": "BE developers"}' --accountId="'${COMPANYID:="cert.somix11.testnet"}'"
+near view $CONTRACT getAllVacancies '{"poolName": "'${POOL:="developers"}'"}'
 
 echo
 echo

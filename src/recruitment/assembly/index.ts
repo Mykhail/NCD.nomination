@@ -9,7 +9,17 @@ import {
 
 import {AccountId, XCC_GAS, VACANCY_PREFIX, CANDIDATES_PREFIX, HIRED_CANDIDATES_PREFIX, generateId} from '../../utils';
 
-/*================Vacancy classes================*/
+/**************************************************************************
+ *************************** Vacancy classes ******************************
+ /************************************************************************/
+
+ /**
+ * @class VacanciesPool
+ * @property poolName  - pool ID of the vacancies pool
+ * @property vacancies  - list of vacancies for the specific pool
+ *
+ * Vacancy pool keep all vacancies of the company
+ */
 @nearBindgen
 class VacanciesPool {
     constructor(
@@ -26,6 +36,14 @@ class VacanciesPool {
     }
 }
 
+ /**
+ * @class Vacancy
+ * @property reward      - reward that company pays to recruiter who "close" this vacation
+ * @property details     - position requirements
+ * @property vacancy_id  - Vacancy ID
+ *
+ * Class that represents a single vacancy 
+ */
 @nearBindgen
 class Vacancy {
     constructor(
@@ -35,6 +53,14 @@ class Vacancy {
     ) {}
 }
 
+ /**
+ * @class VacancyDetails
+ * @property position_title   - title of the vacancy e.g "BE Senior"
+ * @property requirements     - position requirements 
+ * @property company_id       - Company ID is a near account ID
+ *
+ * Class that kepp vacancy details
+ */
 @nearBindgen
 class VacancyDetails {
     constructor(
@@ -44,6 +70,14 @@ class VacancyDetails {
     ) {}
 }
 
+ /**
+ * @class VacancyRequirements
+ * @property experience        - needed experience 
+ * @property english_level     - desired english level 
+ * @property timezone          - desired timezone
+ *
+ * Class that kepp more detailed vacancy requirements
+ */
 @nearBindgen
 class VacancyRequirements {
     constructor(
@@ -53,7 +87,9 @@ class VacancyRequirements {
     ) {}
 }
 
-/*================Candidate related classes================*/
+/**************************************************************************
+ *************************** Candidate classes ****************************
+ /************************************************************************/
 @nearBindgen
 class CandidatesPool {
     constructor(
@@ -129,37 +165,29 @@ class DepersonalizedCandidate {
     ) {}
 }
 
-/*================Candidate contact classes================*/
-/*@nearBindgen
-class CandidatesContactsPool {
-    constructor(
-        public candidatId: string,
-        public candidatContacts: PersistentVector<CandidateContact>
-    ){}
+/**
+ * Recruitment contract API
+ * ========================
+ */
 
-    findContact(candidatId: string):CandidateContact[] {
-        const res: CandidateContact[] = [];
-        for (let i = 0; i < this.candidatContacts.length; i++) {
-            if(this.candidatContacts[i].candidate_id ===candidatId) {
-                res.push(this.candidatContacts[i]);
-            }
-        }
-        return res;
-    }
-}
+/**
+ * @function postVacancy
+ * @param pool         - vacancy pool, e.g. "Developers", "QA" etc
+ * @param title        - vacancy title, e.g. "BE developer Senior"
+ * @param experience   - required experience
+ * @param english      - english level
+ * @param timezone     - desired timezone
+ * @param company_id   - Near account is used as a company identifier
+ * 
+ *  Post Vacancy to the defined Vacancies pool
+ *  
+ *  Hiring manager creates a new vacancy within defined vacancies's pool and define reward for the recruitement agency.
+ *  If vacancies pool doesn't exist, it will be created automatically.
+ *  e.g post vacancy for hiring "BE developer Senior" to the vacancy pool "Developers"
+ *  near call {{CONTRACT_NAME}} postVacancy '{"pool": "Developers", "title": "BE developer Senior", "experience":"5+", "english": "fluent", "timezone": "EST", "company_id": "somix11.testnet" }' --accountId="somix11.testnet" --amount 3
+ */
 
-@nearBindgen
-class CandidateContact {
-    constructor(
-        public candidate_id: string,
-        public full_name: string,
-        public email: string,
-        public telegram: string,
-    ) {}
-}
-*/
-/*================ Contract methods -> Vacancy ================*/
-//Company posts vacancy
+
 export function postVacancy(
     pool: string, 
     title: string, 
@@ -189,40 +217,37 @@ export function postVacancy(
     vacanciesPool.vacancies.push(vacancy);
 }
 
-function createVacanciesPool(poolName: string, vacancy: Vacancy): void {
-    const vacancies = new PersistentVector<Vacancy>(poolName);
-    const vacanciesPool = new VacanciesPool(poolName, vacancies);
-    saveVacanciesPool(poolName, vacanciesPool);
-}
-
-function saveVacanciesPool(poolName: string, vacanciesPool: VacanciesPool): void {
-    storage.set(poolName, vacanciesPool);
-}
-
-function getVacanciesPool(poolName: string): VacanciesPool {
-    return storage.getSome<VacanciesPool>(poolName);
-}
-
-//Company or recruiter can get list of all vacations for specific pool
+/**
+ * @function getAllVacancies
+ * @param poolName         - poolName, e.g. "Developers", "QA" etc
+ * 
+ *  Returns a list of open vacancies for the specified pool
+ *  Functional specification:
+ *  Recruitement company get the list of the open vacancies and start looking candidates for the company
+ *  near view {{CONTRACT}} getAllVacancies '{"poolName": "BE developers"}' --accountId={{accountId}}
+ */
 export function getAllVacancies(poolName: string): Vacancy[] {
     const vacanciesPool = getVacanciesPool(poolName);
     return vacanciesPool.getVacancies();
 }
 
-export function getVacancyInfo(vacancyId: string, poolName: string): Vacancy | null{ 
-    const allVacancies = getAllVacancies(poolName);
-    let vacancyInfo!: Vacancy;
-
-    for (var i = 0; i < allVacancies.length; i++) {
-        if(allVacancies[i].vacancy_id == vacancyId) {
-            vacancyInfo = allVacancies[i];
-        }
-    }
-    return vacancyInfo
-}
-
-/*================ Contract methods -> Candidate ================*/
-//Recruiter provides depersonalised cv to the company
+/**
+ * @function postCandidate
+ * @param vacancy_id            - vacancy pool, e.g. "Developers", "QA" etc
+ * @param experience            - candidate's info - experience
+ * @param english_level         - candidate's info - english level
+ * @param timezone              - candidate's info - english level
+ * @param salary_expectations   - candidate's info - salary_expectations
+ * @param full_name             - candidate's info - full name
+ * @param email                 - candidate's info - email
+ * @param telegram              - candidate's info - telegram
+ * 
+ *  Recruiter adds candidate's data to the contract
+ *  Functional specification:
+ *  Recruiter provides candidate's profile to the company. 
+ *  Hiring manager will be able to check candidate info, but not contact information.
+ *  near call {{CONTRACT}} postCandidate '{"vacancy_id": "{{COPY FROM A VACANCY OBJECT}}", "experience": "4 years with BE, 1 year TL", "english_level":"Upper-Intermediate", "timezone": "EST", "salary_expectations": "5000USD", "full_name": "John Galt", "email": "whoisjgalt@gmail.com", "telegram": "@JohnGalt" }' --accountId={{ACCOUNT_ID}}
+ */
 export function postCandidate(
     vacancy_id: string, 
     experience: string,
@@ -236,64 +261,43 @@ export function postCandidate(
     const vacancyId = vacancy_id;
     const candidateId = CANDIDATES_PREFIX + generateId();
     const candidate = new Candidate(candidateId, experience, english_level, timezone, salary_expectations, telegram, full_name, email);
-    //const candidateContact = new CandidateContact(candidateId, full_name, email, telegram);
 
     if(!storage.hasKey(CANDIDATES_PREFIX + vacancyId)){
         createCandidatesPool(vacancyId, CANDIDATES_PREFIX) ;
     }
 
-    //if(!storage.hasKey("candidates_contacts_" + candidateId)){
-    //    createCandidatesContactsPool(candidateId, candidateContact);
-    //}
-
     const candidatesPool = getCandidatesPool(vacancyId, CANDIDATES_PREFIX);
-    //const candidatesContacts = getCandidatesContacts(candidateId);
-
     candidatesPool.candidates.push(candidate);
-    //candidatesContacts.candidatContacts.push(candidateContact);
 }
 
-function createCandidatesPool(vacancyId: string, poolName:string): void {
-    const candidates = new PersistentVector<Candidate>(poolName + vacancyId);
-    const candidatesPool = new CandidatesPool(vacancyId, candidates);
-    saveCandidatesPool(vacancyId, candidatesPool, poolName);
-}
-
-function saveCandidatesPool(vacancyId: string, candidatesPool: CandidatesPool, poolName:string): void {
-    storage.set(poolName + vacancyId, candidatesPool);
-}
-
-function getCandidatesPool(vacancyId: string, poolName: string): CandidatesPool {
-    return storage.getSome<CandidatesPool>(poolName + vacancyId);
-}
-
-function getCandidatesList(vacancyId: string, poolName:string): Candidate[] {
-    const candidatesPool = getCandidatesPool(vacancyId, poolName);
-    return candidatesPool.getCandidates();
-}
-
-export function getDepersonalizedCandidates(vacancyId: string, poolName:string): DepersonalizedCandidate[] {
+/**
+ * @function getCandidates
+ * @param vacancyId         - vacancy ID
+ * @param poolName          - poolName, e.g. "Developers", "QA" etc
+ * 
+ *  Returns a list of candidates for the specific vacancy
+ *  Functional specification:
+ *  Hiring manager get the list of candodates for the specific vacancy to check if a profile suite needs of the company or not
+ *  near view cert.somix11.testnet getDepersonalizedCandidates '{"vacancyId": "{{COPY FROM A VACANCY OBJECT}}", "poolName": "candidates_"}' --accountId="{{ACCOUNT_ID}}"
+ */
+export function getCandidates(vacancyId: string, poolName:string): DepersonalizedCandidate[] {
     const candidatesPool = getCandidatesPool(vacancyId, poolName);
     return candidatesPool.getDepersonalizedCandidates();
 }
 
-export function getHiredCandidates(vacancyId: string): Candidate[] {
-    const candidatesPool = getCandidatesPool(vacancyId, HIRED_CANDIDATES_PREFIX);
-    return candidatesPool.getCandidates();
-}
-
-function getCandidateInfo(vacancyId: string, candidateId: string, poolName: string): Candidate { 
-    const allCandidates = getCandidatesList(vacancyId, poolName);
-    let candidateInfo!: Candidate;
-
-    for (var i = 0; i < allCandidates.length; i++) {
-        if(allCandidates[i].candidate_id == candidateId) {
-            candidateInfo = allCandidates[i];
-        }
-    }
-    return candidateInfo
-}
-
+/**
+ * @function hireCandidate
+ * @param poolName          - poolName, e.g. "Developers", "QA" etc
+ * @param candidateId       - candidate ID
+ * @param vacancyId         - vacancy ID
+ * 
+ *  Initiate candidate's hiring
+ *  Functional specification:
+ *  Hiring manager confirms that the candidates meets position requirements and initiate hiring process
+ *  Rewards automatically transfered to the recruiting agency 
+ *  Contact data appears in the pool "Hired candidates"
+ *  near call {{CONTRACT}} hireCandidate '{"poolName": "BE developers", "candidateId": "candidate-90622853", "vacancyId":"vacancy-90622188"}' --accountId="{{ACCOUNT_ID}}"
+ */
 export function hireCandidate(poolName: string, candidateId: string, vacancyId: string): void {
 
     const vacancy = getVacancyInfo(vacancyId, poolName);
@@ -314,27 +318,90 @@ export function hireCandidate(poolName: string, candidateId: string, vacancyId: 
         const to_recruiter = ContractPromiseBatch.create(companyId);
         const self = Context.contractName
         to_recruiter.transfer(vacancy.reward);
-
-        to_recruiter.then(self).function_call("on_payout_complete", "{}", u128.Zero, XCC_GAS);
+        
+        to_recruiter.then(self).function_call("on_hiring_complete", "{}", u128.Zero, XCC_GAS);
     }
 }
 
-export function on_payout_complete(): void {
+/**
+ * @function getHiredCandidates
+ * @param vacancyId         - vacancy ID
+ * 
+ *  Returns list of hired candidates
+ *  Functional specification:
+ *  Hiring manager checks list of all hired candidates for the specific vacancy
+ *  near call {{CONTRACT}} hireCandidate '{"poolName": "BE developers", "candidateId": "candidate-90622853", "vacancyId":"vacancy-90622188"}' --accountId="{{ACCOUNT_ID}}"
+ */
+export function getHiredCandidates(vacancyId: string): Candidate[] {
+    const candidatesPool = getCandidatesPool(vacancyId, HIRED_CANDIDATES_PREFIX);
+    return candidatesPool.getCandidates();
+}
+
+/**************************************************************************
+ ******************* Private contract methods -> Vacancy ****************
+ /************************************************************************/
+
+function createVacanciesPool(poolName: string, vacancy: Vacancy): void {
+    const vacancies = new PersistentVector<Vacancy>(poolName);
+    const vacanciesPool = new VacanciesPool(poolName, vacancies);
+    saveVacanciesPool(poolName, vacanciesPool);
+}
+
+function saveVacanciesPool(poolName: string, vacanciesPool: VacanciesPool): void {
+    storage.set(poolName, vacanciesPool);
+}
+
+function getVacanciesPool(poolName: string): VacanciesPool {
+    return storage.getSome<VacanciesPool>(poolName);
+}
+
+function getVacancyInfo(vacancyId: string, poolName: string): Vacancy | null{ 
+    const allVacancies = getAllVacancies(poolName);
+    let vacancyInfo!: Vacancy;
+
+    for (var i = 0; i < allVacancies.length; i++) {
+        if(allVacancies[i].vacancy_id == vacancyId) {
+            vacancyInfo = allVacancies[i];
+        }
+    }
+    return vacancyInfo
+}
+
+/**************************************************************************
+ ******************* Private contract methods -> Candidate ****************
+ /************************************************************************/
+
+function createCandidatesPool(vacancyId: string, poolName:string): void {
+    const candidates = new PersistentVector<Candidate>(poolName + vacancyId);
+    const candidatesPool = new CandidatesPool(vacancyId, candidates);
+    saveCandidatesPool(vacancyId, candidatesPool, poolName);
+}
+
+function saveCandidatesPool(vacancyId: string, candidatesPool: CandidatesPool, poolName:string): void {
+    storage.set(poolName + vacancyId, candidatesPool);
+}
+
+function getCandidatesPool(vacancyId: string, poolName: string): CandidatesPool {
+    return storage.getSome<CandidatesPool>(poolName + vacancyId);
+}
+
+function getCandidatesList(vacancyId: string, poolName:string): Candidate[] {
+    const candidatesPool = getCandidatesPool(vacancyId, poolName);
+    return candidatesPool.getCandidates();
+}
+
+function getCandidateInfo(vacancyId: string, candidateId: string, poolName: string): Candidate { 
+    const allCandidates = getCandidatesList(vacancyId, poolName);
+    let candidateInfo!: Candidate;
+
+    for (var i = 0; i < allCandidates.length; i++) {
+        if(allCandidates[i].candidate_id == candidateId) {
+            candidateInfo = allCandidates[i];
+        }
+    }
+    return candidateInfo
+}
+
+export function on_hiring_complete(): void {
     logging.log("candidate has been hired!");
 }
-
-/*================ Contract methods -> Contact ================*/
-/*function createCandidatesContactsPool(candidateId: string, candidateContact: CandidateContact): void {
-    const candidatesContacts = new PersistentVector<CandidateContact>(candidateId);
-    const candidatesContactsPool = new CandidatesContactsPool(candidateId, candidatesContacts);
-    saveCandidatesContactsPool(candidateId, candidatesContactsPool);
-}
-
-function saveCandidatesContactsPool(candidateId: string, candidatesContactsPool: CandidatesContactsPool): void {
-    storage.set("candidates_contacts_" + candidateId, candidatesContactsPool);
-}
-
-function getCandidatesContacts(candidateId: string): CandidatesContactsPool {
-    return storage.getSome<CandidatesContactsPool>("candidates_contacts_" + candidateId);
-}
-*/

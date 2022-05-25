@@ -1,170 +1,128 @@
-# `near-sdk-as` Starter Kit
+# Enthusiastic recruitment
+"Good candidates are always near"
 
-This is a good project to use as a starting point for your AssemblyScript project.
+A smart contract developed to provide functionality for a trustworthy recruitment process with the help of Near protocol smart contracts. 
 
-## Samples
+## Problem
 
-This repository includes a complete project structure for AssemblyScript contracts targeting the NEAR platform.
+The hiring of IT talents is one of the most challenging domains for recruiters. Quite often recruitment agencies face issues connected with the dishonest behavior of companies hiring managers, at the same time companies devote huge budgets to the external recruiters not getting the expected results.
 
-The example here is very basic.  It's a simple contract demonstrating the following concepts:
-- a single contract
-- the difference between `view` vs. `change` methods
-- basic contract storage
+## Solution
+Create a decentralized application to provide a reliable interface for the hiring managers - recruitmenmt agencies interactions.
+Near smart contract is going to be used for that.
 
-There are 2 AssemblyScript contracts in this project, each in their own folder:
+### Users journey
 
-- **simple** in the `src/simple` folder
-- **singleton** in the `src/singleton` folder
-
-### Simple
-
-We say that an AssemblyScript contract is written in the "simple style" when the `index.ts` file (the contract entry point) includes a series of exported functions.
-
-In this case, all exported functions become public contract methods.
-
-```ts
-// return the string 'hello world'
-export function helloWorld(): string {}
-
-// read the given key from account (contract) storage
-export function read(key: string): string {}
-
-// write the given value at the given key to account (contract) storage
-export function write(key: string, value: string): string {}
-
-// private helper method used by read() and write() above
-private storageReport(): string {}
-```
-
-### Singleton
-
-We say that an AssemblyScript contract is written in the "singleton style" when the `index.ts` file (the contract entry point) has a single exported class (the name of the class doesn't matter) that is decorated with `@nearBindgen`.
-
-In this case, all methods on the class become public contract methods unless marked `private`.  Also, all instance variables are stored as a serialized instance of the class under a special storage key named `STATE`.  AssemblyScript uses JSON for storage serialization (as opposed to Rust contracts which use a custom binary serialization format called borsh).
-
-```ts
-@nearBindgen
-export class Contract {
-
-  // return the string 'hello world'
-  helloWorld(): string {}
-
-  // read the given key from account (contract) storage
-  read(key: string): string {}
-
-  // write the given value at the given key to account (contract) storage
-  @mutateState()
-  write(key: string, value: string): string {}
-
-  // private helper method used by read() and write() above
-  private storageReport(): string {}
-}
-```
+1. IT company "Bug makers" wants to hire a strong Senior dev for their needs.
+2. Hiring manager Jason posts vacancy, provids position requirements and deposit a reward for the recruitment agency (e.g. 50 Near)
+3. "Hiring Angels" agency assign a recruiter Laura to work on "Bug makers"'s vacancies pool
+4. Laura checks the list of the open vacancies and start looking for available candidates
+5. As soon as a candidate found Laura applies them to a vacancy
+6. Jason see a new depersonalized candidate in the candidates list
+7. Jason checks information if the candidate suits requirements and if so click "hire"
+8. Contact information of the candidate is sent to Jason and appear in the Hired Candidates list
+9. Reward for the candidates is sent to Laura Near account
+10. Laura and Jason are happy (at least I hope so)
 
 
-## Usage
+- [Installation](#installation)
+  - [Commands](#commands)
+  - [Who This Is For](#who-this-is-for)
+- [UI Wireframes](#ui-wireframes)
+- [File Structure](#file-structure)
+- [Contracts](#contracts)
+  - [Proposal](#proposal)
+  - [Project](#project)
+  - [Factory](#factory)
+- [Deploying](#deploying)
+- [Contributing](#contributing)
+  - [Future Development](#future-development)
+  - [Key Contributors](#key-contributors)
 
-### Getting started
+---
 
-(see below for video recordings of each of the following steps)
+## Installation
 
-INSTALL `NEAR CLI` first like this: `npm i -g near-cli`
+1. clone this repo
+2. run `yarn install` (or `npm install`)
+3. run `yarn build` (or `npm run build`)
 
-1. clone this repo to a local folder
-2. run `yarn`
-3. run `./scripts/1.dev-deploy.sh`
-3. run `./scripts/2.use-contract.sh`
-4. run `./scripts/2.use-contract.sh` (yes, run it to see changes)
-5. run `./scripts/3.cleanup.sh`
 
-### Videos
+### Commands
 
-**`1.dev-deploy.sh`**
-
-This video shows the build and deployment of the contract.
-
-[![asciicast](https://asciinema.org/a/409575.svg)](https://asciinema.org/a/409575)
-
-**`2.use-contract.sh`**
-
-This video shows contract methods being called.  You should run the script twice to see the effect it has on contract state.
-
-[![asciicast](https://asciinema.org/a/409577.svg)](https://asciinema.org/a/409577)
-
-**`3.cleanup.sh`**
-
-This video shows the cleanup script running.  Make sure you add the `BENEFICIARY` environment variable. The script will remind you if you forget.
+**Compile source to WebAssembly**
 
 ```sh
-export BENEFICIARY=<your-account-here>   # this account receives contract account balance
+yarn build                    # asb --target debug
+yarn build:release            # asb
 ```
 
-[![asciicast](https://asciinema.org/a/409580.svg)](https://asciinema.org/a/409580)
-
-### Other documentation
-
-- See `./scripts/README.md` for documentation about the scripts
-- Watch this video where Willem Wyndham walks us through refactoring a simple example of a NEAR smart contract written in AssemblyScript
-
-  https://youtu.be/QP7aveSqRPo
-
-  ```
-  There are 2 "styles" of implementing AssemblyScript NEAR contracts:
-  - the contract interface can either be a collection of exported functions
-  - or the contract interface can be the methods of a an exported class
-
-  We call the second style "Singleton" because there is only one instance of the class which is serialized to the blockchain storage.  Rust contracts written for NEAR do this by default with the contract struct.
-
-   0:00 noise (to cut)
-   0:10 Welcome
-   0:59 Create project starting with "npm init"
-   2:20 Customize the project for AssemblyScript development
-   9:25 Import the Counter example and get unit tests passing
-  18:30 Adapt the Counter example to a Singleton style contract
-  21:49 Refactoring unit tests to access the new methods
-  24:45 Review and summary
-  ```
-
-## The file system
+**Run unit tests**
 
 ```sh
-├── README.md                          # this file
-├── as-pect.config.js                  # configuration for as-pect (AssemblyScript unit testing)
-├── asconfig.json                      # configuration for AssemblyScript compiler (supports multiple contracts)
-├── package.json                       # NodeJS project manifest
-├── scripts
-│   ├── 1.dev-deploy.sh                # helper: build and deploy contracts
-│   ├── 2.use-contract.sh              # helper: call methods on ContractPromise
-│   ├── 3.cleanup.sh                   # helper: delete build and deploy artifacts
-│   └── README.md                      # documentation for helper scripts
-├── src
-│   ├── as_types.d.ts                  # AssemblyScript headers for type hints
-│   ├── simple                         # Contract 1: "Simple example"
-│   │   ├── __tests__
-│   │   │   ├── as-pect.d.ts           # as-pect unit testing headers for type hints
-│   │   │   └── index.unit.spec.ts     # unit tests for contract 1
-│   │   ├── asconfig.json              # configuration for AssemblyScript compiler (one per contract)
-│   │   └── assembly
-│   │       └── index.ts               # contract code for contract 1
-│   ├── singleton                      # Contract 2: "Singleton-style example"
-│   │   ├── __tests__
-│   │   │   ├── as-pect.d.ts           # as-pect unit testing headers for type hints
-│   │   │   └── index.unit.spec.ts     # unit tests for contract 2
-│   │   ├── asconfig.json              # configuration for AssemblyScript compiler (one per contract)
-│   │   └── assembly
-│   │       └── index.ts               # contract code for contract 2
-│   ├── tsconfig.json                  # Typescript configuration
-│   └── utils.ts                       # common contract utility functions
-└── yarn.lock                          # project manifest version lock
+yarn test:unit                # asp --verbose --nologo -f unit.spec
 ```
 
-You may clone this repo to get started OR create everything from scratch.
+**Run simulation tests**
 
-Please note that, in order to create the AssemblyScript and tests folder structure, you may use the command `asp --init` which will create the following folders and files:
+These tests can be run from within VSCode (or any Rust-compatible IDE) or from the command line.
 
+_NOTE: Rust is required_
+
+```sh
+yarn test:simulate            # yarn build:release && cargo test -- --nocapture
 ```
-./assembly/
-./assembly/tests/
-./assembly/tests/example.spec.ts
-./assembly/tests/as-pect.d.ts
+
+**Run all tests**
+
+```sh
+yarn test                     # yarn test:unit && test:simulate
 ```
+
+## UX Wireframes
+
+All UX wireframes can be found in the `wireframes/` folder. 
+Wireframes of the core pages are presented below.
+ 
+**Post a Vacancy**
+_Hiring manager Jason posts vacancy, provids position requirements and deposit a reward for the recruitment agency (e.g. 50 Near)_
+
+![post-vacancy](wireframes/1.PostVacancy[hiring manager view].png)
+
+**Get list of posted vacncies**
+
+_Laura checks the list of the open vacancies and start looking for available candidates_
+
+![get-vacancies-list](wireframes/3.OpenVacancies[recruiter view].png)
+
+**Apply candidate**
+_As soon as a candidate found Laura applies them to a vacancy_
+
+![apply-candidate](wireframes/3.OpenVacancies[recruiter view].png)
+
+**Get list of applied candidates**
+_Jason see a new depersonalized candidate in the candidates list_
+_Jason checks information if the candidate suits requirements and if so click "hire"_
+
+![check-candidates](wireframes/5.AllCandidates[hiring manager view].png)
+
+**Hire candidate**
+_Contact information of the candidate is sent to Jason and appear in the Hired Candidates list_
+_Reward for the candidates is sent to Laura Near account_
+
+![hire-candidate](wireframes/6.HireCandidatePopup[hiring manager view].png)
+
+## Recruitement contract
+
+Contract is represented by two primary classes Vacancy and Candidate. 
+Vacancy is created by a hiring managers and keep details about this entity:
+- Position requirements
+- Reward that company is ready to pay to a recruitement agency
+
+Candidate is created by a recruiter and keep the following details:
+- Candidate experience
+- Timezone
+- English level
+- Salary expectations
+
+## Deploying

@@ -9,7 +9,7 @@ echo "Step 0: Check for environment variable with contract name"
 echo ---------------------------------------------------------
 echo
 
-[ -z "$CONTRACT" ] && echo "Missing \$CONTRACT environment variable" && exit 1
+[ -z "$CONTRACT" ] && echo "Missing \$CONTRACT environment variable"
 [ -z "$CONTRACT" ] || echo "Found it! \$CONTRACT is set to [ $CONTRACT ]"
 
 echo
@@ -28,17 +28,19 @@ echo
 echo ---------------------------------------------------------
 echo
 
-near deploy $CONTRACT ./build/debug/recruitment.wasm
+near dev-deploy $CONTRACT ./build/debug/recruitment.wasm
 
 echo
 echo
 echo ---------------------------------------------------------
-echo "Step 3: Prepare your environment for next steps"
+echo "Step 3: Prepare your environment for the next steps"
 echo
-echo "(a) set an environment variable using target account name"
-echo "    see example below (this may not work on Windows)"
+echo run the following commands
+echo 'export CONTRACT=<dev-123-456>'
+echo 'export COMPANYID=<your own account>'
 echo
 echo ---------------------------------------------------------
+echo
 echo
 
 exit 0

@@ -26,11 +26,8 @@ Near smart contract is going to be used for that.
 
 
 - [Installation](#installation)
-  - [Commands](#commands)
-  - [Who This Is For](#who-this-is-for)
 - [UI Wireframes](#ui-wireframes)
-- [File Structure](#file-structure)
-- [Contracts](#contracts)
+- [Contract](#contracts)
   - [Proposal](#proposal)
   - [Project](#project)
   - [Factory](#factory)
@@ -45,39 +42,8 @@ Near smart contract is going to be used for that.
 
 1. clone this repo
 2. run `yarn install` (or `npm install`)
-3. run `yarn build` (or `npm run build`)
-
-
-### Commands
-
-**Compile source to WebAssembly**
-
-```sh
-yarn build                    # asb --target debug
-yarn build:release            # asb
-```
-
-**Run unit tests**
-
-```sh
-yarn test:unit                # asp --verbose --nologo -f unit.spec
-```
-
-**Run simulation tests**
-
-These tests can be run from within VSCode (or any Rust-compatible IDE) or from the command line.
-
-_NOTE: Rust is required_
-
-```sh
-yarn test:simulate            # yarn build:release && cargo test -- --nocapture
-```
-
-**Run all tests**
-
-```sh
-yarn test                     # yarn test:unit && test:simulate
-```
+3. run `export CONTRACT=<ACCOUNT_TO_DEPLOY>`
+4. run `./scripts/recruitement-deploy.sh` 
 
 ## UX Wireframes
 
@@ -102,15 +68,10 @@ _As soon as a candidate found Laura applies them to a vacancy_
 
 ![apply-candidate](wireframes/3.OpenVacancies[recruiter_view].png)
 
-**Get list of applied candidates**
-
-_Jason see a new depersonalized candidate in the candidates list_
-_Jason checks information if the candidate suits requirements and if so click "hire"_
-
-![check-candidates](wireframes/5.AllCandidates[hiring_manager_view].png)
-
 **Hire candidate**
 
+_Jason see a new depersonalized candidate in the candidates list_
+_If the candidate suits requirements and he clicks "hire"_
 _Contact information of the candidate is sent to Jason and appear in the Hired Candidates list_
 _Reward for the candidates is sent to Laura Near account_
 
@@ -128,5 +89,3 @@ Candidate is created by a recruiter and keep the following details:
 - Timezone
 - English level
 - Salary expectations
-
-## Deploying

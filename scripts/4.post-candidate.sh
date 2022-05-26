@@ -19,13 +19,14 @@ echo
 [ -z "$1" ] || echo "Found it! \$VACANCY_ID is set to [ $VACANCY_ID ]"
 
 VACANCY_ID=$1
-EXPERIENCE=$2
-ENGLISH=$3
-TIMEZONE=$4
-SALARY=$5
-CANDIDATE_NAME=$6
-CANDIDATE_EMAIL=$7
-CANDIDATE_TELEGRAM=$8
+COMPANYID=$2
+EXPERIENCE=$3
+ENGLISH=$4
+TIMEZONE=$5
+SALARY=$6
+CANDIDATE_NAME=$7
+CANDIDATE_EMAIL=$8
+CANDIDATE_TELEGRAM=$9
 
 echo
 echo
@@ -34,7 +35,7 @@ echo "Step 1: Call 'postCandidate' functions on the contract"
 echo ---------------------------------------------------------
 echo
 
-near call $CONTRACT postCandidate '{"vacancy_id": "'$VACANCY_ID'", "experience": "'${EXPERIENCE:="5+"}'", "english_level":"'${ENGLISH:="Advanced"}'", "timezone": "'${TIMEZONE:="EST"}'", "salary_expectations": "'${SALARY:="5000USD"}'", "full_name": "'${CANDIDATE_NAME:="John Galt"}'", "email": "'${CANDIDATE_EMAIL:="j.galt@gmail.com"}'", "telegram": "'${CANDIDATE_TELEGRAM:="@whoisjohn"}'" }' --accountId="'${COMPANYID}'"
+near call $CONTRACT postCandidate '{"vacancy_id": "'$VACANCY_ID'", "company_id": "'$COMPANYID'", "experience": "'${EXPERIENCE:="5+"}'", "english_level":"'${ENGLISH:="Advanced"}'", "timezone": "'${TIMEZONE:="EST"}'", "salary_expectations": "'${SALARY:="5000USD"}'", "full_name": "'${CANDIDATE_NAME:="John Galt"}'", "email": "'${CANDIDATE_EMAIL:="j.galt@gmail.com"}'", "telegram": "'${CANDIDATE_TELEGRAM:="@whoisjohn"}'"}' --accountId="'${COMPANYID}'"
 
 echo
 echo

@@ -28,7 +28,7 @@ POOL=$3
 echo
 echo
 echo ---------------------------------------------------------
-echo "Step 1: Call 'postCandidate' functions on the contract"
+echo "Step 1: Call 'hireCandidate' functions on the contract"
 echo ---------------------------------------------------------
 echo
 

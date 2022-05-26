@@ -23,8 +23,6 @@ yarn build
 echo
 echo ---------------------------------------------------------
 echo "Step 2: Deploy the contract"
-echo
-echo 
 echo ---------------------------------------------------------
 echo
 

@@ -144,6 +144,7 @@ class CandidatesPool {
 class Candidate {
     constructor(
         public candidate_id: string,
+        public company_id: string,
         public experience: string,
         public english_level: string,
         public timezone: string,
@@ -228,7 +229,13 @@ export function postVacancy(
  */
 export function getAllVacancies(poolName: string): Vacancy[] {
     const vacanciesPool = getVacanciesPool(poolName);
-    return vacanciesPool.getVacancies();
+    const vacancies:Vacancy[] = vacanciesPool.getVacancies();
+    
+    if(!vacancies.length) {
+        assert('No vacancies for ${poolName} found!');
+    }
+
+    return vacancies
 }
 
 /**
@@ -250,6 +257,7 @@ export function getAllVacancies(poolName: string): Vacancy[] {
  */
 export function postCandidate(
     vacancy_id: string, 
+    company_id:string,
     experience: string,
     english_level: string,
     timezone: string,
@@ -260,7 +268,7 @@ export function postCandidate(
 
     const vacancyId = vacancy_id;
     const candidateId = CANDIDATES_PREFIX + generateId();
-    const candidate = new Candidate(candidateId, experience, english_level, timezone, salary_expectations, telegram, full_name, email);
+    const candidate = new Candidate(candidateId, company_id, experience, english_level, timezone, salary_expectations, telegram, full_name, email);
     
     if(!storage.hasKey(CANDIDATES_PREFIX + vacancyId)){
         createCandidatesPool(vacancyId, CANDIDATES_PREFIX) ;
@@ -301,8 +309,8 @@ export function getCandidates(vacancyId: string): DepersonalizedCandidate[] {
 export function hireCandidate(poolName: string, candidateId: string, vacancyId: string): void {
 
     const vacancy = getVacancyInfo(vacancyId, poolName);
-    const companyId = vacancy ? vacancy.details.company_id : "";
     let hiredCandidate: Candidate = getCandidateInfo(vacancyId, candidateId, CANDIDATES_PREFIX);
+    const companyId = hiredCandidate ? hiredCandidate.company_id : "";
 
     if(!storage.hasKey(HIRED_CANDIDATES_PREFIX + vacancyId)){
         createCandidatesPool(vacancyId, HIRED_CANDIDATES_PREFIX);

@@ -14,14 +14,14 @@ Create a decentralized application based on the Near Protocol to establish a rel
 
 1. IT company "Bug makers" wants to hire a strong Senior dev for their needs.
 2. Hiring manager Jason posts vacancy, provides position requirements, and deposits a reward for the recruitment agency (e.g. 50 Near)
-3. "Hiring Angels" agency assign a recruiter Laura to work on "Bug makers"'s vacancies pool
-4. Laura checks the list of the open vacancies and start looking for available candidates on the market
-5. As soon as a candidate is found by Laura, she applies them for a vacancy
+3. "Hiring Angels" agency assign a recruiter Linda to work on "Bug makers"'s vacancies pool
+4. Linda checks the list of the open vacancies and start looking for available candidates on the market
+5. As soon as a candidate is found by Linda, she applies them for a vacancy
 6. Jason see a new depersonalized candidate on the candidates list. There is all needed info except name and contact data.
 7. Jason checks if the candidate profile suits the requirements and if so clicks "hire"
 8. Contact information of the candidate is automatically sent to Jason and appears on the Hired Candidates list
-9. Reward for the candidates is sent to Laura's Near account
-10. Laura and Jason are happy (at least I hope so)
+9. Reward for the candidates is sent to Linda's Near account
+10. Linda and Jason are happy (at least I hope so)
 
 
 - [Installation](#installation)
@@ -51,13 +51,13 @@ _Hiring manager Jason posts vacancy, provids position requirements and deposit a
 
 **Get list of posted vacncies**
 
-_Laura checks the list of the open vacancies and start looking for available candidates_
+_Linda checks the list of the open vacancies and start looking for available candidates_
 
 ![get-vacancies-list](wireframes/3.OpenVacancies[recruiter_view].png)
 
 **Apply candidate**
 
-_As soon as a candidate found Laura applies them to a vacancy_
+_As soon as a candidate found Linda applies them to a vacancy_
 
 ![apply-candidate](wireframes/4.ApplyCandidate[recruiter_view].png)
 
@@ -66,7 +66,7 @@ _As soon as a candidate found Laura applies them to a vacancy_
 _Jason see a new depersonalized candidate in the candidates list_
 _If the candidate suits requirements and he clicks "hire"_
 _Contact information of the candidate is sent to Jason and appear in the Hired Candidates list_
-_Reward for the candidates is sent to Laura Near account_
+_Reward for the candidates is sent to Linda Near account_
 
 ![hire-candidate](wireframes/6.HireCandidatePopup[hiring_manager_view].png)
 

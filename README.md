@@ -3,6 +3,9 @@ _"Good candidates are always near"_
 
 A smart contract developed to provide functionality for a trustworthy recruitment process with the help of Near protocol smart contracts. 
 
+## Demo
+[Youtube link](https://youtu.be/dfXP7HObpSs)
+
 ## Problem
 
 The hiring of IT talents is one of the most challenging domains for recruiters. Quite often recruitment agencies face issues connected with the dishonest behavior of companies hiring managers, at the same time companies devote huge budgets to the external recruiters not getting the expected results.
